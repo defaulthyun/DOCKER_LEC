@@ -1,0 +1,9 @@
+<div>
+    Login Success<br>
+    잠시후 예측 화면으로 이동합니다.
+</div>
+<script type="text/javascript">
+    setTimeout(()=>{
+        window.location.href = "{{ url_for('predict') }}"
+    }, 1000*1)
+</script>

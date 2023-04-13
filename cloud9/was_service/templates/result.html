@@ -1,0 +1,30 @@
+<html>
+  <head>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <div>
+      <h3 id="start">예측 결과 대기<span></span></h3>
+      <h3 id="stop"><span></span></h3>
+    </div>
+    <script type="text/javascript">
+      $('#start > span').html(`${new Date()}`)
+      let term = setInterval(()=>{
+        $.get({
+          url:'/result',
+          success:res=>{
+            console.log( res )  // 예측 결과
+            if(res.code == 0)
+              $('#stop').html(`예측 중<span></span>`)
+            else{
+              clearInterval(term) // 인터벌 종료
+              $('#stop').html(`예측 결과 ${res.msg}<span></span>`)
+            }
+            $('#stop > span').html(`${new Date()}`)
+          }
+        })  
+      }, 1000*0.5)              // 0.5초 간격 반복 조회
+      
+    </script>
+  </body>
+</html>

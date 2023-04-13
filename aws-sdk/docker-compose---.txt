@@ -1,0 +1,88 @@
+# ?쒕퉬?? 而⑦뀒?대뒗 ?섏〈??怨좊젮?섏뿬 ?쒖꽌?濡?湲곗닠
+services:
+  # db
+  db:
+    # Dockerfile ?놁씠 ?대?吏 鍮뚮뱶???댁슜??吏곸젒 湲곗닠
+    image: mariadb
+    # 鍮꾨?踰덊샇 愿???댁쟾 踰꾩쟾?ㅺ낵???명솚?깆쓣 ?꾪븳 ?뚮윭洹몄씤 ?ㅼ젙
+    command: '--default-authentication-plugin=mysql_native_password'
+    restart: always
+    healthcheck:
+      test: ['CMD-SHELL','mysqladmin ping -h 127.0.0.1 --password="$$(cat /run/secrets/db-password)" --silent']
+      interval: 10s
+      retries: 3
+      start_period: 30s
+    # 鍮꾨?踰덊샇 ?뺣낫 吏??
+    secrets:
+      - db-password
+    # ?ы듃 ?ㅼ젙
+    expose:
+      - 3306
+      - 3307
+    # ?섍꼍蹂??
+    environment:
+      - MYSQL_DATABASE=ml_db
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db-password
+    # ?ㅽ듃?뚰겕
+    networks:
+      - was_backend_net
+    # 蹂쇰ⅷ, 蹂쇰ⅷ留덉슫??諛⑹떇
+    volumes:
+      - db_vol:/var/lib/mysql
+  # backend
+  backend:
+    # ?대?吏 異쒖쿂 ?뱀? ?대?吏 鍮뚮뱶(?앹꽦)???뺣낫 湲곗닠 : Dockerfile or 吏곸젒 湲곗닠
+    build:
+      # Dockerfile??議댁옱?섎뒗 ?대뜑 吏??
+      context: backend
+      # ?寃?-> ?대?吏紐?
+      target: builder
+    # ?뚮씪?ㅽ겕瑜??뺤긽?곸쑝濡?醫낅즺?쒗궎湲??꾪빐?? Ctrl+C -> 醫낅즺?쒓렇??
+    # SIGINT媛믪쓣 ?ㅼ젙 => Ctrl+C ?ㅻ낫???명꽣?쏀듃 ?≪떊
+    stop_signal: SIGINT
+    # ?ы듃
+    ports:
+      - '8000:8000'
+    restart: always
+    networks:
+      - web_frontend_net
+      - was_backend_net
+    depends_on:
+      # db?쇰뒗 ?대쫫??媛吏?而⑦뀒?대꼫???곹깭媛 ?댁븘 ?덉쓣??媛??
+      db:
+        condition: service_healthy
+  # proxy -> web?뚰듃, nginx, 援ъ꽦?ㅼ젙
+  proxy:
+    # proxy ?대뜑 諛묒뿉媛??Dockerfile??李얠븘??鍮뚮뱶
+    build: proxy
+    # ?ш????듭뀡
+    restart: always
+    # ?ы듃 ?ㅼ젙, Dockerfile ?댁뿉 EXPOSE 誘몄궗??
+    ports:
+      - 80:80
+    # 援щ룞???섏〈??遺??-> backend(was)媛 媛?숇맂?꾩뿉 媛??
+    depends_on:
+      - backend
+    # ?ㅽ듃?뚰겕 
+    networks:
+      - web_frontend_net
+
+# 蹂쇰ⅷ
+volumes:
+  # 蹂쇰ⅷ 留덉슫??
+  db_vol:
+# ?ㅽ듃?뚰겕
+networks:
+  # ?꾨윴??諛⑺뼢 ?ㅽ듃?뚰겕
+  web_frontend_net:
+  # 諛깆뿏??諛⑺뼢 ?ㅽ듃?뚰겕
+  was_backend_net:
+# 蹂댁븞 -> db 鍮꾨쾲?뚯씪???쎌뼱???곸슜
+secrets:
+  # ?붾퉬 鍮꾨쾲???섎?(而ㅼ뒪?)
+  db-password:
+    # ?뚯씪 吏??
+    file: db/password.txt
+
+  
+  
